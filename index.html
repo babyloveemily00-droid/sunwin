@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <title>Play Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+    <style>
+        /* ============================================================
+           NEO-BRUTALISM THEME (Gtraffic style)
+           ============================================================ */
+        :root {
+            --ink: #0f172a;
+            --yellow: #FFDE59;
+            --cyan: #00E5FF;
+            --cyan-dark: #00C2D1;
+            --pink: #FF99C8;
+            --red: #FF5757;
+            --purple: #5454D4;
+            --lime: #CCFF00;
+            --cream: #FAF8F5;
+            --soft-yellow: #FCF6BD;
+            --mint: #D0F4DE;
+            --blue: #A9DEF9;
+            --gray-bg: #F4F4F0;
+            --shadow-sm: 2px 2px 0 0 var(--ink);
+            --shadow-md: 4px 4px 0 0 var(--ink);
+            --shadow-lg: 6px 6px 0 0 var(--ink);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; outline:none; -webkit-tap-highlight-color:transparent; }
+        body {
+            width:100vw; height:100vh; overflow:hidden;
+            background:#000;
+            font-family:'Inter', 'Segoe UI', Tahoma, sans-serif;
+            position:fixed; top:0; left:0;
+        }
+        .iframe-container { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; }
+        iframe { width:100%; height:100%; border:none; display:block; }
+
+        /* ===== FLOATING MENU PANEL ===== */
+        .imgui-panel {
+            position:fixed; z-index:9999;
+            background:#fff;
+            border:3px solid var(--ink);
+            box-shadow: var(--shadow-lg);
+            min-width:230px; max-width:280px;
+            font-size:13px; color:var(--ink);
+            user-select:none; -webkit-user-select:none;
+            top:50px; left:20px;
+            overflow:hidden;
+            border-radius:0;
+        }
+
+        .imgui-titlebar {
+            background: var(--cyan);
+            padding:10px 12px;
+            display:flex; align-items:center; justify-content:space-between;
+            font-weight:900; font-size:12.5px; color:var(--ink);
+            cursor:grab;
+            text-transform:uppercase;
+            letter-spacing:0.08em;
+            border-bottom:3px solid var(--ink);
+        }
+        .imgui-titlebar:active { cursor:grabbing; }
+        .imgui-titlebar .title-left { display:flex; align-items:center; gap:8px; }
+
+        /* chấm tròn nhấp nháy thay cho "dot" cũ */
+        .imgui-titlebar .dot {
+            width:9px; height:9px; border-radius:50%;
+            background: var(--ink);
+            flex-shrink:0;
+            box-shadow: 0 0 0 2px var(--cyan);
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity:1; }
+            50% { opacity:0.3; }
+        }
+
+        .imgui-titlebar .collapse-btn {
+            background: var(--ink);
+            border:2px solid var(--ink);
+            color: var(--cyan);
+            cursor:pointer;
+            font-size:14px; width:24px; height:24px; line-height:18px; text-align:center;
+            font-weight:900;
+            padding:0;
+            transition: all 0.12s ease;
+            border-radius:0;
+        }
+        .imgui-titlebar .collapse-btn:hover {
+            background: var(--red);
+            color: #fff;
+            border-color: var(--ink);
+        }
+
+        .imgui-content {
+            padding:14px;
+            display:flex; flex-direction:column; gap:12px;
+            background: #fff;
+        }
+        .imgui-content.collapsed { display:none; }
+
+        /* toggle row */
+        .imgui-toggle-row {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:10px 12px;
+            background: var(--soft-yellow);
+            border:2px solid var(--ink);
+            box-shadow: var(--shadow-sm);
+        }
+        .imgui-toggle-row .label {
+            font-size:12px;
+            color: var(--ink);
+            font-weight:900;
+            display:flex; align-items:center; gap:8px;
+            text-transform:uppercase;
+            letter-spacing:0.06em;
+        }
+        .imgui-toggle-row .label i {
+            color: var(--purple);
+            font-size:13px;
+            font-style: normal;
+        }
+
+        /* switch brutalism */
+        .switch { position:relative; width:42px; height:24px; flex-shrink:0; }
+        .switch input { opacity:0; width:0; height:0; position:absolute; }
+        .switch .track {
+            position:absolute; inset:0;
+            background: #fff;
+            border:2px solid var(--ink);
+            cursor:pointer;
+            transition: background 0.15s ease;
+        }
+        .switch .track::before {
+            content:'';
+            position:absolute;
+            width:14px; height:14px;
+            left:3px; top:2px;
+            background: var(--ink);
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .switch input:checked + .track {
+            background: var(--lime);
+        }
+        .switch input:checked + .track::before {
+            transform: translateX(18px);
+            background: var(--ink);
+        }
+
+        .imgui-select-group { display:flex; flex-direction:column; gap:6px; }
+        .imgui-select-label {
+            font-size:10px;
+            color: var(--ink);
+            text-transform:uppercase;
+            letter-spacing:0.1em;
+            font-weight:900;
+            display:flex; align-items:center; gap:6px;
+        }
+        .imgui-select-label i {
+            color: var(--purple);
+            font-size:10px;
+            font-style: normal;
+        }
+        .imgui-select-wrap { position:relative; }
+        .imgui-select {
+            width:100%;
+            padding:10px 32px 10px 12px;
+            background: #fff;
+            border:3px solid var(--ink);
+            color: var(--ink);
+            font-size:12.5px;
+            font-weight:800;
+            cursor:pointer;
+            font-family:inherit;
+            appearance:none; -webkit-appearance:none;
+            transition: all 0.12s ease;
+            text-transform:uppercase;
+            letter-spacing:0.03em;
+        }
+        .imgui-select:focus, .imgui-select:hover {
+            box-shadow: var(--shadow-sm);
+            transform: translate(-1px, -1px);
+        }
+        .imgui-select-wrap::after {
+            content:'\25BE';
+            position:absolute;
+            right:10px; top:50%;
+            transform: translateY(-50%);
+            color: var(--ink);
+            font-size:12px;
+            font-weight:900;
+            pointer-events:none;
+        }
+
+        /* ===== ROBOT / PREDICTION BUBBLE ===== */
+        .robot-container {
+            position:fixed; z-index:9998;
+            display:none;
+            align-items:center; gap:12px;
+            top:50%; left:30%;
+            transform: translate(-50%, -50%);
+            cursor:grab;
+            user-select:none; -webkit-user-select:none;
+        }
+        .robot-container.visible { display:flex; }
+        .robot-container.dragging { cursor:grabbing; opacity:0.9; }
+
+        .robot-img {
+            width:78px; height:78px;
+            pointer-events:none; flex-shrink:0;
+            filter: drop-shadow(4px 4px 0 rgba(15,23,42,0.35));
+        }
+
+        .thought-bubble {
+            position:relative;
+            background:#fff;
+            border:3px solid var(--ink);
+            box-shadow: var(--shadow-md);
+            padding:12px 16px;
+            min-width:160px;
+            max-width:200px;
+            align-self:center;
+            pointer-events:auto;
+            border-radius:0;
+        }
+        /* mũi tên nhọn bằng 2 tam giác (viền đen + nền trắng) */
+        .thought-bubble::before {
+            content:'';
+            position:absolute;
+            left:-14px; top:50%;
+            transform: translateY(-50%);
+            width:0; height:0;
+            border-top:9px solid transparent;
+            border-bottom:9px solid transparent;
+            border-right:14px solid var(--ink);
+        }
+        .thought-bubble::after {
+            content:'';
+            position:absolute;
+            left:-9px; top:50%;
+            transform: translateY(-50%);
+            width:0; height:0;
+            border-top:7px solid transparent;
+            border-bottom:7px solid transparent;
+            border-right:10px solid #fff;
+        }
+
+        .bubble-game {
+            font-size:10px;
+            color: var(--ink);
+            text-align:center;
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:0.1em;
+            background: var(--cyan);
+            border:2px solid var(--ink);
+            padding:2px 8px;
+            display:inline-block;
+            margin: 0 auto 6px;
+            box-shadow: var(--shadow-sm);
+        }
+        .bubble-phien {
+            font-size:10px;
+            color: #64748b;
+            text-align:center;
+            margin-bottom:8px;
+            margin-top:4px;
+            font-weight:700;
+            letter-spacing:0.05em;
+            text-transform:uppercase;
+        }
+        .bubble-result {
+            font-size:26px;
+            font-weight:900;
+            text-align:center;
+            text-transform:uppercase;
+            letter-spacing:0.02em;
+            line-height:1;
+        }
+        .bubble-result.Tài {
+            color: var(--red);
+            text-shadow: 2px 2px 0 var(--ink);
+        }
+        .bubble-result.Xỉu {
+            color: var(--purple);
+            text-shadow: 2px 2px 0 var(--ink);
+        }
+
+        /* wrap game name để căn giữa */
+        .bubble-game-wrap {
+            text-align:center;
+            margin-bottom:4px;
+        }
+
+        @media (max-width:480px) {
+            .imgui-panel { min-width:190px; max-width:230px; top:16px; left:8px; }
+            .imgui-content { padding:10px; gap:10px; }
+            .imgui-titlebar { font-size:11px; padding:8px 10px; }
+            .robot-img { width:56px; height:56px; }
+            .thought-bubble { min-width:135px; max-width:165px; padding:9px 12px; }
+            .bubble-result { font-size:22px; }
+            .bubble-game { font-size:9px; padding:2px 6px; }
+            .bubble-phien { font-size:9px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="iframe-container">
+        <iframe id="gameIframe" src="https://web.sunwin.webcam/?affId=Sunwin" title="Game" allow="autoplay; encrypted-media; gyroscope; accelerometer" loading="lazy" referrerpolicy="no-referrer"></iframe>
+    </div>
+
+    <!-- Menu Panel -->
+    <div class="imgui-panel" id="imguiPanel">
+        <div class="imgui-titlebar" id="imguiTitlebar">
+            <span class="title-left"><span class="dot"></span>SkidVN V2</span>
+            <button class="collapse-btn" id="collapseBtn">−</button>
+        </div>
+        <div class="imgui-content" id="imguiContent">
+            <div class="imgui-toggle-row">
+                <span class="label"><i>◆</i>Dự Đoán</span>
+                <label class="switch">
+                    <input type="checkbox" id="enablePrediction">
+                    <span class="track"></span>
+                </label>
+            </div>
+            <div class="imgui-select-group">
+                <span class="imgui-select-label"><i>▸</i>Cổng Game</span>
+                <div class="imgui-select-wrap">
+                    <select class="imgui-select" id="gateSelect" onchange="changeGame(this.value)">
+                                                <option value="txsun" selected>Sunwin</option>
+                                                <option value="tx789" >789Club</option>
+                                                <option value="txbetvip" >Betvip</option>
+                                                <option value="txmd5betvip" >Betvip MD5</option>
+                                                <option value="txlc79" >LC79</option>
+                                                <option value="txmd5lc79" >LC79 MD5</option>
+                                                <option value="txhit" >Hitclub</option>
+                                                <option value="txmd5hit" >Hitclub MD5</option>
+                                                <option value="txson789" >Son789</option>
+                                                <option value="txmd5son789" >Son789 MD5</option>
+                                                <option value="txxd88" >Xocdia88</option>
+                                                <option value="txmax789" >Max789</option>
+                                                <option value="txmd5max789" >Max789 MD5</option>
+                                                <option value="68gb_xanh" >TX 68GB</option>
+                                                <option value="68gb_do" >MD5 68GB</option>
+                                                <option value="txta28" >TX Ta28</option>
+                                                <option value="txmd5ta28" >MD5 Ta28</option>
+                                                <option value="txogkfan" >OGKFAN</option>
+                                                <option value="txb52" >B52</option>
+                                                <option value="txmd5b52" >B52 MD5</option>
+                                                <option value="txiwin" >Iwin</option>
+                                                <option value="txmd5iwin" >Iwin MD5</option>
+                                                <option value="txluck8" >Luck8</option>
+                                                <option value="txrikvip" >Rikvip</option>
+                                                <option value="txmd5rikvip" >Rikvip MD5</option>
+                                                <option value="tx25679" >TX Sha256 79Club</option>
+                                            </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Robot -->
+    <div class="robot-container" id="robotContainer">
+        <img class="robot-img" src="https://i.postimg.cc/JnzTVyp3/1000154880-removebg-preview.png" alt="Robot">
+        <div class="thought-bubble">
+            <div class="bubble-game-wrap"><div class="bubble-game" id="bubbleGame"></div></div>
+            <div class="bubble-phien" id="bubblePhien"></div>
+            <div class="bubble-result" id="bubbleResult"></div>
+        </div>
+    </div>
+
+    <script>
+        var currentGame = 'txsun';
+        var refreshInterval = 6000;
+        var robotTimer = null;
+
+        function changeGame(code) {
+            window.location.href = '?game=' + code;
+        }
+
+        function fetchPrediction(callback) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '?ajax=1&game=' + currentGame, true);
+            xhr.timeout = 8000;
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try { callback(null, JSON.parse(xhr.responseText)); }
+                    catch(e) { callback('Parse Error', null); }
+                } else { callback('HTTP ' + xhr.status, null); }
+            };
+            xhr.onerror = function() { callback('Error', null); };
+            xhr.ontimeout = function() { callback('Timeout', null); };
+            xhr.send();
+        }
+
+        function updateRobot(data) {
+            var game = document.getElementById('bubbleGame');
+            var phien = document.getElementById('bubblePhien');
+            var result = document.getElementById('bubbleResult');
+
+            if (data && !data.error) {
+                game.textContent = data.game_name || '';
+                phien.textContent = 'Phiên: ' + (data.phien || '---');
+                result.textContent = data.du_doan || '---';
+                result.className = 'bubble-result ' + (data.du_doan || '');
+            } else {
+                game.textContent = '';
+                phien.textContent = 'Đang tải...';
+                result.textContent = '...';
+                result.className = 'bubble-result';
+            }
+        }
+
+        function startRobot() {
+            stopRobot();
+            function update() { fetchPrediction(function(err, data) { updateRobot(data); }); }
+            update();
+            robotTimer = setInterval(update, refreshInterval);
+        }
+
+        function stopRobot() {
+            if (robotTimer) { clearInterval(robotTimer); robotTimer = null; }
+        }
+
+        document.getElementById('enablePrediction').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('robotContainer').classList.add('visible');
+                startRobot();
+            } else {
+                document.getElementById('robotContainer').classList.remove('visible');
+                stopRobot();
+            }
+        });
+
+        // ==================== PANEL DRAG ====================
+        var panel = document.getElementById('imguiPanel');
+        var titlebar = document.getElementById('imguiTitlebar');
+        var draggingPanel = false, px, py;
+        titlebar.addEventListener('mousedown', function(e) {
+            if (e.target.closest('button')||e.target.closest('select')||e.target.closest('input')) return;
+            draggingPanel = true; var r = panel.getBoundingClientRect(); px = e.clientX - r.left; py = e.clientY - r.top;
+        });
+        titlebar.addEventListener('touchstart', function(e) {
+            if (e.target.closest('button')||e.target.closest('select')||e.target.closest('input')) return;
+            draggingPanel = true; var r = panel.getBoundingClientRect(); px = e.touches[0].clientX - r.left; py = e.touches[0].clientY - r.top;
+        }, {passive:false});
+        document.addEventListener('mousemove', function(e) {
+            if (!draggingPanel) return;
+            panel.style.left = Math.max(0, Math.min(e.clientX - px, window.innerWidth - panel.offsetWidth)) + 'px';
+            panel.style.top = Math.max(0, Math.min(e.clientY - py, window.innerHeight - panel.offsetHeight)) + 'px';
+        });
+        document.addEventListener('touchmove', function(e) {
+            if (!draggingPanel) return;
+            panel.style.left = Math.max(0, Math.min(e.touches[0].clientX - px, window.innerWidth - panel.offsetWidth)) + 'px';
+            panel.style.top = Math.max(0, Math.min(e.touches[0].clientY - py, window.innerHeight - panel.offsetHeight)) + 'px';
+        }, {passive:false});
+        document.addEventListener('mouseup', function(){ draggingPanel = false; });
+        document.addEventListener('touchend', function(){ draggingPanel = false; });
+
+        // ==================== ROBOT DRAG ====================
+        var robot = document.getElementById('robotContainer');
+        var draggingRobot = false, rx, ry;
+        robot.addEventListener('mousedown', function(e) {
+            draggingRobot = true; robot.classList.add('dragging');
+            var r = robot.getBoundingClientRect(); rx = e.clientX - r.left; ry = e.clientY - r.top;
+        });
+        robot.addEventListener('touchstart', function(e) {
+            draggingRobot = true; robot.classList.add('dragging');
+            var r = robot.getBoundingClientRect(); rx = e.touches[0].clientX - r.left; ry = e.touches[0].clientY - r.top;
+        }, {passive:false});
+        document.addEventListener('mousemove', function(e) {
+            if (!draggingRobot) return;
+            robot.style.left = Math.max(0, Math.min(e.clientX - rx, window.innerWidth - robot.offsetWidth)) + 'px';
+            robot.style.top = Math.max(0, Math.min(e.clientY - ry, window.innerHeight - robot.offsetHeight)) + 'px';
+            robot.style.transform = 'none';
+        });
+        document.addEventListener('touchmove', function(e) {
+            if (!draggingRobot) return;
+            robot.style.left = Math.max(0, Math.min(e.touches[0].clientX - rx, window.innerWidth - robot.offsetWidth)) + 'px';
+            robot.style.top = Math.max(0, Math.min(e.touches[0].clientY - ry, window.innerHeight - robot.offsetHeight)) + 'px';
+            robot.style.transform = 'none';
+        }, {passive:false});
+        document.addEventListener('mouseup', function(){ if(draggingRobot){draggingRobot=false;robot.classList.remove('dragging');} });
+        document.addEventListener('touchend', function(){ if(draggingRobot){draggingRobot=false;robot.classList.remove('dragging');} });
+
+        // Collapse
+        var collapsed = false;
+        document.getElementById('collapseBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            collapsed = !collapsed;
+            document.getElementById('imguiContent').classList.toggle('collapsed', collapsed);
+            this.textContent = collapsed ? '+' : '−';
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a47428d2efa6354b',t:'MTc5MTQ1MjE2OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
